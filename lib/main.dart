@@ -1,41 +1,129 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:cisneros/Pages/FollowingPage.dart';
+import 'package:cisneros/Providers/UserProvider.dart';
 
-void main() => runApp(MyApp());
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      // Application name
-      title: 'Flutter Hello World',
-      // Application theme data, you can set the colors for the application as
-      // you want
-      theme: ThemeData(
-        // useMaterial3: false,
-        primarySwatch: Colors.blue,
+void main() => runApp(ChangeNotifierProvider<UserProvider>(
+      create: (context) => UserProvider(),
+      child: MaterialApp(
+        home: HomePage(),
+        debugShowCheckedModeBanner: false,
       ),
-      // A widget which will be started on application startup
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
+    ));
+
+class HomePage extends StatefulWidget {
+  @override
+  _StateHomePage createState() => _StateHomePage();
 }
 
-class MyHomePage extends StatelessWidget {
-  final String title;
-  const MyHomePage({super.key, required this.title});  
+class _StateHomePage extends State<HomePage> {
+  final TextEditingController _controller = TextEditingController();
+
+  void _getUser() {
+    if (_controller.text.isEmpty) {
+      Provider.of<UserProvider>(context, listen: false)
+          .setMessage('Please Enter your username');
+    } else {
+      Provider.of<UserProvider>(context, listen: false)
+          .fetchUser(_controller.text)
+          .then((value) {
+        if (value) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => FollowingPage()),
+          );
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final value = context.watch<UserProvider>();
     return Scaffold(
-      appBar: AppBar(
-        // The title text which will be shown on the action bar
-        title: Text(title),
-      ),
-      body: Center(
-        child: Text(
-          'Hello, World!',
+      body: SingleChildScrollView(
+        child: Container(
+          height: MediaQuery.of(context).size.height,
+          color: Colors.black,
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              children: <Widget>[
+                SizedBox(
+                  height: 100,
+                ),
+                Container(
+                  width: 80,
+                  height: 80,
+                  child: CircleAvatar(
+                    backgroundColor: Colors.transparent,
+                    backgroundImage: NetworkImage(
+                        'https://cdn-icons-png.flaticon.com/512/25/25231.png'),
+                  ),
+                ),
+                SizedBox(
+                  height: 30,
+                ),
+                Text(
+                  "Github",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold),
+                ),
+                SizedBox(
+                  height: 150,
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.white.withOpacity(.1)),
+                  child: TextField(
+                    onChanged: (value) {
+                      Provider.of<UserProvider>(context, listen: false)
+                          .setMessage(null);
+                    },
+                    controller: _controller,
+                    enabled: !Provider.of<UserProvider>(context, listen: false)
+                        .isLoading(),
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                        errorText:
+                            Provider.of<UserProvider>(context, listen: false)
+                                .getMessage(),
+                        border: InputBorder.none,
+                        hintText: "Github username",
+                        hintStyle: TextStyle(color: Colors.grey)),
+                  ),
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                MaterialButton(
+                  padding: EdgeInsets.all(20),
+                  color: Colors.blue,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Align(
+                    child: Provider.of<UserProvider>(context, listen: false)
+                            .isLoading()
+                        ? CircularProgressIndicator(
+                            backgroundColor: Colors.white,
+                            strokeWidth: 2,
+                          )
+                        : Text(
+                            'Get Your Followers Now',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                  ),
+                  onPressed: () {
+                    _getUser();
+                  },
+                )
+              ],
+            ),
+          ),
         ),
       ),
     );
